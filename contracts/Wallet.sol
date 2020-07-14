@@ -32,9 +32,9 @@ contract Wallet {
         return transfers; // returns all array of tansfers
     }
 
-    function createTransfer(uint256 amount, address payable to) external {
+    function createTransfer(uint256 amount, address payable to) external  onlyApprover(){
         transfers.push(Transfer(transfers.length, amount, to, 0, false)); //
-    } // push to array of tansfers.
+    } // push to array of tansfers. 
 
     function approveTransfer(uint256 id) external {
         require(transfers[id].sent == false, "Transfer has already been sent.");
@@ -64,9 +64,7 @@ contract Wallet {
                 allowed = true;
             }
         }
-
         require(allowed == true, "Only  Approver allowed!");
-
         _;
     }
 }
