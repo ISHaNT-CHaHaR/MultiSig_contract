@@ -1,15 +1,17 @@
 const Wallet = artifacts.require('Wallet');
 const { expectRevert } = require('@openzeppelin/test-helpers');
+const { web3 } = require('@openzeppelin/test-helpers/src/setup');
+const balance = require('@openzeppelin/test-helpers/src/balance');
 contract('Wallet', (accounts) => {
    let wallet;
    beforeEach(async () => {
       wallet = await Wallet.new([accounts[0], accounts[1], accounts[2]], 2);
 
-      //   await web3.eth.sendtransaction({
-      //      from: accounts[0],
-      //      to: wallet.address,
-      //      value: 1000,
-      //   });
+      await web3.eth.sendTransaction({
+         from: accounts[0],
+         to: wallet.address,
+         value: 1000,
+      });
    });
 
    it('should have correct  approvers and quorum', async () => {
@@ -48,7 +50,30 @@ contract('Wallet', (accounts) => {
       await wallet.createTransfer(100, accounts[5], { from: accounts[0] });
       await wallet.approveTransfer(0, { from: accounts[0] });
       const transfers = await wallet.getTransfers();
+
+      const balance = await web3.eth.getBalance(wallet.address);
+
       assert(transfers[0].sent === false);
       assert(transfers[0].approvals === '1');
+      assert(balance === '1000');
+      console.log(wallet.address); // address of smart contract...
    });
+
+   it('should send transaction if quorum reached!', async () => {
+      const balanceBefore = web3.utils.toBN(
+         await web3.eth.getBalance(accounts[6])
+      );
+      await wallet.createTransfer(100, accounts[6], { from: accounts[0] });
+      await wallet.approveTransfer(0, { from: accounts[0] });
+      await wallet.approveTransfer(0, { from: accounts[1] });
+
+      const balanceAfter = web3.utils.toBN(
+         await web3.eth.getBalance(accounts[6])
+      );
+      assert(balanceAfter.sub(balanceBefore).toNumber() === 100);
+   });
+
+
+
+   
 });
