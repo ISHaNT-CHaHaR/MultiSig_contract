@@ -1,7 +1,7 @@
 const Wallet = artifacts.require('Wallet');
 const { expectRevert } = require('@openzeppelin/test-helpers');
 const { web3 } = require('@openzeppelin/test-helpers/src/setup');
-const balance = require('@openzeppelin/test-helpers/src/balance');
+
 contract('Wallet', (accounts) => {
    let wallet;
    beforeEach(async () => {
@@ -42,7 +42,7 @@ contract('Wallet', (accounts) => {
    it('Should not create transfers if sender not approved!', async () => {
       await expectRevert(
          wallet.createTransfer(100, accounts[5], { from: accounts[4] }),
-         'Only  Approver allowed!'
+         'Only Approver allowed!'
       );
    });
 
@@ -73,7 +73,31 @@ contract('Wallet', (accounts) => {
       assert(balanceAfter.sub(balanceBefore).toNumber() === 100);
    });
 
+   it('should not approve transfer if sender is not approved!', async () => {
+      await wallet.createTransfer(100, accounts[5], { from: accounts[0] });
+      await expectRevert(
+         wallet.approveTransfer(0, { from: accounts[4] }),
+         'Only Approver allowed!'
+      );
+   });
 
+   it('should not approve transfer if transfer is already sent!', async () => {
+      await wallet.createTransfer(100, accounts[6], { from: accounts[0] });
+      await wallet.approveTransfer(0, { from: accounts[0] });
+      await wallet.approveTransfer(0, { from: accounts[1] });
+      await expectRevert(
+         wallet.approveTransfer(0, { from: accounts[2] }),
+         'Transfer has already been sent.'
+      );
+   });
 
-   
+   it('should not approve transfer twice', async () => {
+      await wallet.createTransfer(100, accounts[6], { from: accounts[0] });
+      await wallet.approveTransfer(0, { from: accounts[0] });
+
+      await expectRevert(
+         wallet.approveTransfer(0, { from: accounts[0] }),
+         'Cannot approve Transfer twice'
+      ); 
+   });
 });

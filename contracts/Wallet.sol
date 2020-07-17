@@ -36,7 +36,7 @@ contract Wallet {
         transfers.push(Transfer(transfers.length, amount, to, 0, false)); //
     } // push to array of tansfers. 
 
-    function approveTransfer(uint256 id) external {
+    function approveTransfer(uint256 id) external onlyApprover() {
         require(transfers[id].sent == false, "Transfer has already been sent.");
         require(
             approvals[msg.sender][id] == false,
@@ -64,7 +64,7 @@ contract Wallet {
                 allowed = true;
             }
         }
-        require(allowed == true, "Only  Approver allowed!");
+        require(allowed == true, "Only Approver allowed!");
         _;
     }
 }
